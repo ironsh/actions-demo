@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+log() { echo "> $*"; }
+
+# Check dependencies
+for cmd in jq gh docker; do
+  if ! command -v "$cmd" &>/dev/null; then
+    echo "Error: $cmd is required but not installed." >&2
+    exit 1
+  fi
+done
+
 # Ensure we're running against the user's fork, not the upstream repo
 GH_USER=$(gh api user -q '.login')
 UPSTREAM=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
@@ -9,7 +19,7 @@ REPO_NAME="${UPSTREAM#*/}"
 if [[ "$UPSTREAM" == "${GH_USER}/"* ]]; then
   OWNER_REPO="$UPSTREAM"
 else
-  echo "Forking ${UPSTREAM}..."
+  log "Forking ${UPSTREAM}..."
   gh repo fork --remote=false 2>/dev/null || true
   OWNER_REPO="${GH_USER}/${REPO_NAME}"
   # Wait for the fork to be ready
@@ -22,46 +32,46 @@ else
 fi
 
 REPO_URL="https://github.com/${OWNER_REPO}"
-echo "Using repo: ${OWNER_REPO}"
+log "Using repo: ${OWNER_REPO}"
 
-echo "Fetching runner registration token..."
+log "Fetching runner registration token..."
 RUNNER_TOKEN=$(gh api "repos/${OWNER_REPO}/actions/runners/registration-token" --method POST --jq '.token')
 
-echo "Generating CA (if needed)..."
+log "Generating CA (if needed)..."
 ./generate-ca.sh
 
-echo "Cleaning up previous run..."
+log "Cleaning up previous run..."
 docker compose down 2>/dev/null || true
 
-echo "Starting containers..."
+log "Starting containers..."
 RUNNER_TOKEN="$RUNNER_TOKEN" RUNNER_REPO="$REPO_URL" docker compose up --build -d
 
 # Wait for the runner to come online
-echo "Waiting for runner to start..."
+log "Waiting for runner to start..."
 SESSION_WARNING_SHOWN=false
 while true; do
   line=$(docker compose logs runner --tail 5 2>/dev/null)
   if echo "$line" | grep -q "Listening for Jobs"; then
-    echo "Runner is online."
+    log "Runner is online."
     break
   fi
   if [[ "$SESSION_WARNING_SHOWN" == false ]] && echo "$line" | grep -q "A session for this runner already exists"; then
-    echo "Stale session detected — the runner is reconnecting. This can take a few minutes."
+    log "Stale session detected — the runner is reconnecting. This can take a few minutes."
     SESSION_WARNING_SHOWN=true
   fi
   sleep 1
 done
 
 # Kick off the demo workflow
-echo "Triggering demo workflow..."
+log "Triggering demo workflow..."
 gh workflow run demo.yml --repo "$OWNER_REPO"
 sleep 2
 RUN_URL=$(gh run list --repo "$OWNER_REPO" --workflow demo.yml --limit 1 --json url -q '.[0].url')
-echo "See this run on GitHub: ${RUN_URL}"
+log "See this run on GitHub: ${RUN_URL}"
 
 # Stream proxy egress logs, formatted as: ALLOW GET https://host/path
 echo ""
-echo "Streaming egress logs..."
+log "Streaming egress logs..."
 echo ""
 
 set -m
@@ -114,8 +124,9 @@ docker compose logs proxy --no-log-prefix 2>&1 | \
     "",
     "\u001b[35mSecret swaps: \($swapped | length)\u001b[0m",
     ($swapped | map(
+      . as $entry |
       [.request_transforms[]? | select(.annotations.swapped) | .annotations.swapped[]] |
-      map("  \(.secret) → \(.locations | join(", "))") | .[]
+      map("  \(.secret) → \(.locations | join(", ")) (\($entry.audit.method) \($entry.audit.host)\($entry.audit.path))") | .[]
     ) | unique | .[]),
     "",
     "\u001b[32mAllowed requests: \($allowed | length)\u001b[0m",
