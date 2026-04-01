@@ -68,8 +68,8 @@ exec docker compose logs proxy --follow --no-log-prefix 2>&1 | \
     .audit |
     (.method | . + (" " * (4 - length))[0:4-length]) as $method |
     (if .action == "allow" then "\u001b[32mALLOW\u001b[0m"
-     elif .action == "deny" then "\u001b[31mDENY\u001b[0m"
-     else "\u001b[33mERROR\u001b[0m" end) as $action |
+     elif .action == "reject" then "\u001b[31mDENY \u001b[0m"
+     else "\u001b[33m\(.action | ascii_upcase)\u001b[0m" end) as $action |
     "\($ts) \(.status_code // "---") \($action) \($method)" as $prefix |
     "https://\(.host)\(.path)" as $url |
     (96 - ($prefix | length) + 9) as $max_url |
