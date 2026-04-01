@@ -60,8 +60,13 @@ gh workflow run demo.yml --repo "$OWNER_REPO"
 echo ""
 echo "Streaming egress logs..."
 echo ""
-exec docker compose logs proxy --follow --no-log-prefix 2>&1 | \
+
+LOG_FILE=$(mktemp)
+trap 'rm -f "$LOG_FILE"' EXIT
+
+docker compose logs proxy --follow --no-log-prefix 2>&1 | \
   grep --line-buffered '^{' | \
+  tee "$LOG_FILE" | \
   jq -r --unbuffered '
     select(.audit != null) |
     (.time | split(".")[0] | sub("T"; " ")) as $ts |
@@ -78,4 +83,38 @@ exec docker compose logs proxy --follow --no-log-prefix 2>&1 | \
     else
       $prefix + " " + $url
     end
-  '
+  ' &
+LOG_PID=$!
+
+# Wait for the runner to finish (ephemeral — exits after one job)
+docker compose wait runner 2>/dev/null || docker wait "$(docker compose ps -q runner)" 2>/dev/null || true
+sleep 2
+kill "$LOG_PID" 2>/dev/null || true
+wait "$LOG_PID" 2>/dev/null || true
+
+# Print summary
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Summary"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+jq -rs '
+  [.[] | select(.audit != null)] |
+  group_by(.audit.action) |
+  {
+    denied: [.[] | select(.[0].audit.action == "reject")] | add // [],
+    allowed: [.[] | select(.[0].audit.action == "allow")] | add // []
+  } |
+
+  "\u001b[31mDenied requests: \(.denied | length)\u001b[0m",
+  (.denied | map("  \(.audit.method) https://\(.audit.host)\(.audit.path)") | unique | .[]),
+  "",
+  "\u001b[32mAllowed requests: \(.allowed | length)\u001b[0m",
+  (.allowed | group_by(.audit.host) | map(
+    "  \(.[0].audit.host) (\(length) requests)"
+  ) | sort | .[])
+' "$LOG_FILE"
+
+echo ""
+docker compose down 2>/dev/null || true
