@@ -7,7 +7,7 @@ services:
       - ./ca/ca.key:/etc/iron-proxy/ca.key:ro
     networks:
       iron-proxy:
-        ipv4_address: 172.20.0.2
+        ipv4_address: 10.99.0.2
 
   runner:
     build:
@@ -18,7 +18,7 @@ services:
       - RUNNER_TOKEN=${RUNNER_TOKEN}
       - RUNNER_REPO=${RUNNER_REPO}
     dns:
-      - 172.20.0.2
+      - 10.99.0.2
     depends_on:
       - proxy
     networks:
@@ -28,4 +28,4 @@ networks:
   iron-proxy:
     ipam:
       config:
-        - subnet: 172.20.0.0/24
+        - subnet: 10.99.0.0/24

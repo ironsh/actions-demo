@@ -1,6 +1,6 @@
 dns:
   listen: ":53"
-  proxy_ip: "172.20.0.2"
+  proxy_ip: "10.99.0.2"
 
 proxy:
   http_listen: ":80"
@@ -20,7 +20,7 @@ transforms:
         - "*.actions.githubusercontent.com"
         - "*.pkg.github.com"
       cidrs:
-        - "172.20.0.0/24"
+        - "10.99.0.0/24"
 
 log:
   level: "info"
