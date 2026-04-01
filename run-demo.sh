@@ -61,7 +61,8 @@ echo ""
 echo "Streaming egress logs..."
 echo ""
 
-docker compose logs proxy --follow --no-log-prefix 2>&1 | \
+set -m
+(docker compose logs proxy --follow --no-log-prefix 2>&1 | \
   grep --line-buffered '^{' | \
   jq -r --unbuffered '
     select(.audit != null) |
@@ -79,13 +80,13 @@ docker compose logs proxy --follow --no-log-prefix 2>&1 | \
     else
       $prefix + " " + $url
     end
-  ' &
+  ') &
 LOG_PID=$!
 
 # Wait for the runner to finish (ephemeral — exits after one job)
 docker compose wait runner 2>/dev/null || docker wait "$(docker compose ps -q runner)" 2>/dev/null || true
 sleep 2
-kill "$LOG_PID" 2>/dev/null || true
+kill %1 2>/dev/null || true
 wait "$LOG_PID" 2>/dev/null || true
 
 # Print summary
