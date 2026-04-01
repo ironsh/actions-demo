@@ -19,6 +19,9 @@ transforms:
         - "*.githubusercontent.com"
         - "*.actions.githubusercontent.com"
         - "*.pkg.github.com"
+        - "api.github.com"
+        - "nodejs.org"
+        - "*.nodejs.org"
       cidrs:
         - "10.99.0.0/24"
 

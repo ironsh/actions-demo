@@ -38,6 +38,10 @@ while true; do
   sleep 1
 done
 
+# Kick off the demo workflow
+echo "Triggering demo workflow..."
+gh workflow run demo.yml --repo "$OWNER_REPO"
+
 # Stream proxy egress logs, formatted as: ALLOW GET https://host/path
 echo ""
 echo "Streaming egress logs..."

