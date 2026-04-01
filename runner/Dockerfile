@@ -1,6 +1,7 @@
-FROM ubuntu:24.04-slim
+FROM debian:bookworm-slim
 
 ARG RUNNER_VERSION=2.333.1
+ARG TARGETARCH
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
@@ -18,10 +19,11 @@ RUN update-ca-certificates
 RUN useradd -m -s /bin/bash runner && \
     echo "runner ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Download and extract the GitHub Actions runner
+# Download and extract the GitHub Actions runner (pick arch automatically)
 WORKDIR /home/runner/actions-runner
-RUN curl -fL -o runner.tar.gz \
-    "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz" && \
+RUN RUNNER_ARCH=$(case "$TARGETARCH" in arm64) echo "arm64" ;; *) echo "x64" ;; esac) && \
+    curl -fL -o runner.tar.gz \
+    "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz" && \
     tar xzf runner.tar.gz && \
     rm runner.tar.gz && \
     ./bin/installdependencies.sh && \
