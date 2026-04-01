@@ -32,6 +32,8 @@ RUN RUNNER_ARCH=$(case "$TARGETARCH" in arm64) echo "arm64" ;; *) echo "x64" ;; 
 COPY runner/entrypoint.sh ./entrypoint.sh
 RUN chmod +x entrypoint.sh && chown runner:runner entrypoint.sh
 
+ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/iron-proxy-ca.crt
+
 USER runner
 
 ENTRYPOINT ["./entrypoint.sh"]
