@@ -43,4 +43,4 @@ echo ""
 echo "Streaming egress logs..."
 echo ""
 exec docker compose logs proxy --follow --no-log-prefix 2>&1 | \
-  jq -r --unbuffered 'select(.host != null) | "\(.action | ascii_upcase) \(.method) https://\(.host)\(.path) \(.status_code // "")"' 2>/dev/null
+  jq -Rr --unbuffered 'try (fromjson | select(.host != null) | "\(.action | ascii_upcase) \(.method) https://\(.host)\(.path) \(.status_code // "")") // empty'
