@@ -19,6 +19,7 @@ transforms:
         - "*.githubusercontent.com"
         - "*.actions.githubusercontent.com"
         - "*.pkg.github.com"
+        - "*.blob.core.windows.net"
         - "api.github.com"
         - "nodejs.org"
         - "*.nodejs.org"
