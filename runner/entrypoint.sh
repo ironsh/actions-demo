@@ -15,6 +15,9 @@ fi
   --url "$RUNNER_REPO" \
   --token "$RUNNER_TOKEN" \
   --name "${RUNNER_NAME:-actions-demo-runner}" \
+  --labels "${RUNNER_LABELS:-self-hosted}" \
+  --ephemeral \
+  --disableupdate \
   --replace
 
 exec ./run.sh
