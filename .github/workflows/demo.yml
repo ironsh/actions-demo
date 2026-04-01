@@ -19,6 +19,9 @@ jobs:
       - name: Allowed request — GitHub API
         run: curl -s https://api.github.com/zen
 
+      - name: Secret swap — proxy token replaced with real key
+        run: curl -s -H "Authorization: Bearer $DEMO_API_KEY" https://httpbin.org/headers
+
       - name: Blocked request — example.com
         run: |
           if curl -sf https://example.com/ -o /dev/null; then
