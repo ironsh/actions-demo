@@ -55,6 +55,9 @@ done
 # Kick off the demo workflow
 echo "Triggering demo workflow..."
 gh workflow run demo.yml --repo "$OWNER_REPO"
+sleep 2
+RUN_URL=$(gh run list --repo "$OWNER_REPO" --workflow demo.yml --limit 1 --json url -q '.[0].url')
+echo "See this run on GitHub: ${RUN_URL}"
 
 # Stream proxy egress logs, formatted as: ALLOW GET https://host/path
 echo ""
