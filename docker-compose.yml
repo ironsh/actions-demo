@@ -2,6 +2,8 @@ services:
   proxy:
     image: ironsh/iron-proxy:latest
     command: ["-config", "/etc/iron-proxy/proxy.yaml"]
+    environment:
+      - DEMO_API_KEY=sk-real-secret-do-not-share
     volumes:
       - ./proxy.yaml:/etc/iron-proxy/proxy.yaml:ro
       - ./ca/ca.crt:/etc/iron-proxy/ca.crt:ro
@@ -18,6 +20,7 @@ services:
       - RUNNER_NAME=${RUNNER_NAME:-actions-demo-runner}
       - RUNNER_TOKEN=${RUNNER_TOKEN}
       - RUNNER_REPO=${RUNNER_REPO}
+      - DEMO_API_KEY=proxy-demo-key-12345
     dns:
       - 10.99.0.2
     depends_on:

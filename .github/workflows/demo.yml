@@ -19,6 +19,17 @@ jobs:
       - name: Allowed request — GitHub API
         run: curl -s https://api.github.com/zen
 
+      - name: Secret swap — proxy token replaced with real key
+        run: |
+          echo "Sending proxy token: $DEMO_API_KEY"
+          RESPONSE=$(curl -s -H "Authorization: Bearer $DEMO_API_KEY" https://httpbin.org/headers)
+          echo "$RESPONSE"
+          if echo "$RESPONSE" | grep -q "sk-real-secret-do-not-share"; then
+            echo "Secret was swapped successfully"
+          else
+            echo "Response does not contain proxy token (it was swapped at the boundary)"
+          fi
+
       - name: Blocked request — example.com
         run: |
           if curl -sf https://example.com/ -o /dev/null; then

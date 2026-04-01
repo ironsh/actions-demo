@@ -23,8 +23,19 @@ transforms:
         - "api.github.com"
         - "nodejs.org"
         - "*.nodejs.org"
+        - "httpbin.org"
       cidrs:
         - "10.99.0.0/24"
+
+  - name: secrets
+    config:
+      source: env
+      secrets:
+        - var: DEMO_API_KEY
+          proxy_value: "proxy-demo-key-12345"
+          match_headers: ["Authorization"]
+          hosts:
+            - name: "httpbin.org"
 
 log:
   level: "info"

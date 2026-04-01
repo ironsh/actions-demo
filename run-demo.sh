@@ -70,6 +70,8 @@ set -m
   jq -r --unbuffered '
     select(.audit != null) |
     (.time | split(".")[0] | sub("T"; " ")) as $ts |
+    ([.request_transforms[]? | select(.annotations.swapped) | .annotations.swapped[].secret] | join(",")) as $swapped |
+    (if ($swapped | length) > 0 then " \u001b[35m[swap: \($swapped)]\u001b[0m" else "" end) as $swap_tag |
     .audit |
     (.method | . + (" " * (4 - length))[0:4-length]) as $method |
     (if .action == "allow" then "\u001b[32mALLOW\u001b[0m"
@@ -78,11 +80,11 @@ set -m
     "\($ts) \(.status_code // "---") \($action) \($method)" as $prefix |
     "https://\(.host)\(.path)" as $url |
     (96 - ($prefix | length) + 9) as $max_url |
-    if ($url | length) > $max_url then
+    (if ($url | length) > $max_url then
       $prefix + " " + $url[:($max_url - 3)] + "..."
     else
       $prefix + " " + $url
-    end
+    end) + $swap_tag
   ') &
 LOG_PID=$!
 
@@ -102,18 +104,22 @@ echo ""
 docker compose logs proxy --no-log-prefix 2>&1 | \
   grep '^{' | \
   jq -rs '
-    [.[] | select(.audit != null)] |
-    group_by(.audit.action) |
-    {
-      denied: [.[] | select(.[0].audit.action == "reject")] | add // [],
-      allowed: [.[] | select(.[0].audit.action == "allow")] | add // []
-    } |
+    [.[] | select(.audit != null)] as $all |
+    [$all[] | select(.audit.action == "reject")] as $denied |
+    [$all[] | select(.audit.action == "allow")] as $allowed |
+    [$all[] | select(.request_transforms[]?.annotations.swapped)] as $swapped |
 
-    "\u001b[31mDenied requests: \(.denied | length)\u001b[0m",
-    (.denied | map("  \(.audit.method) https://\(.audit.host)\(.audit.path)") | unique | .[]),
+    "\u001b[31mDenied requests: \($denied | length)\u001b[0m",
+    ($denied | map("  \(.audit.method) https://\(.audit.host)\(.audit.path)") | unique | .[]),
     "",
-    "\u001b[32mAllowed requests: \(.allowed | length)\u001b[0m",
-    (.allowed | group_by(.audit.host) | map(
+    "\u001b[35mSecret swaps: \($swapped | length)\u001b[0m",
+    ($swapped | map(
+      [.request_transforms[]? | select(.annotations.swapped) | .annotations.swapped[]] |
+      map("  \(.secret) → \(.locations | join(", "))") | .[]
+    ) | unique | .[]),
+    "",
+    "\u001b[32mAllowed requests: \($allowed | length)\u001b[0m",
+    ($allowed | group_by(.audit.host) | map(
       "  \(.[0].audit.host) (\(length) requests)"
     ) | sort | .[])
   '
