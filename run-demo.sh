@@ -26,7 +26,7 @@ RUNNER_TOKEN="$RUNNER_TOKEN" RUNNER_REPO="$REPO_URL" docker compose up --build -
 echo "Waiting for runner to start..."
 while true; do
   line=$(docker compose logs runner --tail 1 2>/dev/null)
-  if echo "$line" | grep -q "Connected to GitHub"; then
+  if echo "$line" | grep -q "Listening for Jobs"; then
     echo "Runner is online."
     break
   fi
