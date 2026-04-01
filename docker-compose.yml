@@ -1,6 +1,7 @@
 services:
   proxy:
     image: ironsh/iron-proxy:latest
+    command: ["-config", "/etc/iron-proxy/proxy.yaml"]
     volumes:
       - ./proxy.yaml:/etc/iron-proxy/proxy.yaml:ro
       - ./ca/ca.crt:/etc/iron-proxy/ca.crt:ro
