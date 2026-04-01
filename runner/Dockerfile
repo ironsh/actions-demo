@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04-slim
 
 ARG RUNNER_VERSION=2.333.1
 
@@ -27,6 +27,9 @@ RUN curl -fL -o runner.tar.gz \
     ./bin/installdependencies.sh && \
     chown -R runner:runner /home/runner/actions-runner
 
+COPY runner/entrypoint.sh ./entrypoint.sh
+RUN chmod +x entrypoint.sh && chown runner:runner entrypoint.sh
+
 USER runner
 
-ENTRYPOINT ["./run.sh"]
+ENTRYPOINT ["./entrypoint.sh"]

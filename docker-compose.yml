@@ -6,4 +6,4 @@ services:
     environment:
       - RUNNER_NAME=${RUNNER_NAME:-actions-demo-runner}
       - RUNNER_TOKEN=${RUNNER_TOKEN}
-      - RUNNER_URL=${RUNNER_URL}
+      - RUNNER_REPO=${RUNNER_REPO}
