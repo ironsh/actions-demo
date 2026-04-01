@@ -34,7 +34,7 @@ done
 echo ""
 echo "Streaming egress logs..."
 echo ""
-docker compose logs proxy -f --since 0s 2>&1 | \
+docker compose logs proxy -f 2>&1 | \
   while IFS= read -r line; do
     # Strip the docker compose prefix (everything up to the JSON object)
     json="${line#*\{}"
