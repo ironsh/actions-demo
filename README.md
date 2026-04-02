@@ -63,6 +63,18 @@ Iron-proxy enforces two transforms on every request:
 
 See [`proxy.yaml`](proxy.yaml) for the full configuration.
 
+## Run it on your own repo
+
+You can audit the egress of any workflow you control:
+
+```bash
+./audit.sh myorg/myapp ci.yml
+```
+
+Your workflow needs `workflow_dispatch:` as a trigger and `runs-on: self-hosted`
+on the job you want to test. The script will register an ephemeral runner,
+trigger the workflow, and show you every outbound request it makes.
+
 ## Learn more
 
 - [iron-proxy](https://github.com/ironsh/iron-proxy) — the egress proxy
